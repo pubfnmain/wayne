@@ -9,7 +9,6 @@ class Pointer final : public LPointer
 {
 public:
 	Pointer(const void *params) noexcept;
-	void focusChanged() override;
 };
 
 #endif

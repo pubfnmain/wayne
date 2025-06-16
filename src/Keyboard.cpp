@@ -5,6 +5,17 @@
 #include "Global.h"
 #include "Compositor.h"
 #include "Toplevel.h"
+#include "Surface.h"
+
+void Keyboard::focusChanged()
+{
+	auto *surface = focus();
+	if (!surface)
+		return;
+	auto *target = (Toplevel*)surface->toplevel();
+	if (target)
+		G::compositor()->con = target;
+}
 
 void cmdFocus(bool next) {
 	Compositor *compositor = G::compositor();
@@ -29,10 +40,11 @@ void cmdFocus(bool next) {
 		target = source;
 	}
 
-	LSurface *surface = target->surface();
+	Surface *surface = (Surface*)target->surface();
 	surface->raise();
 	keyboard->setFocus(surface);
 	pointer->setFocus(surface);
+	surface->repaintOutputs();
 }
 
 Keyboard::Keyboard(const void *params) noexcept : LKeyboard(params)

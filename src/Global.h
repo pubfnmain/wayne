@@ -14,6 +14,8 @@ public:
     {
         return (Compositor*)Louvre::compositor();
     }
+
 };
 
 #endif
+

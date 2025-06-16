@@ -10,6 +10,7 @@ class Keyboard final : public LKeyboard
 public:
     Keyboard(const void *params) noexcept;
     void keyEvent(const LKeyboardKeyEvent &event) override;
+	void focusChanged() override;
 };
 
 #endif

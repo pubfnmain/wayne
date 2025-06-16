@@ -17,7 +17,7 @@ int main(int, char *[])
 
 	Compositor compositor;
 
-	LLauncher::launch("~/.config/wayne/autostart");
+	// LLauncher::launch("~/.config/wayne/autostart");
 
 	if (!compositor.start())
 	{

@@ -12,6 +12,8 @@ public:
 	~Toplevel();
 	Toplevel *prev; //= nullptr;
 	Toplevel *next; //= nullptr;
+	void configureRequest();
+	// void atomsChanged(LBitset<AtomChanges>, const Atoms &prev) override;
 };
 
 #endif

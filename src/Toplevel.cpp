@@ -9,9 +9,10 @@
 Toplevel::Toplevel(const void *params) : LToplevelRole(params)
 {
 	Compositor *compositor = G::compositor();
+
 	LSurface *surf = surface();
 	LSeat *seat = compositor->seat();
-	surf->raise();
+	// surf->raise();
 	seat->keyboard()->setFocus(surf);
 	seat->pointer()->setFocus(surf);
 
@@ -22,9 +23,35 @@ Toplevel::Toplevel(const void *params) : LToplevelRole(params)
 		prev->next = this;
 	} else {
 		prev = this; 
-		next = this; 
+		next = this;
 	}
 	compositor->con = this;
+}
+
+/*
+void Toplevel::atomsChanged(LBitset<AtomChanges> changes, const Atoms &prev)
+{
+	surface()->repaintOutputs();
+}
+*/
+void Toplevel::configureRequest()
+{
+    LOutput *output { cursor()->output() };
+ 
+    if (output)
+    {
+        surface()->sendOutputEnterEvent(output);
+        configureBounds(
+            output->availableGeometry().size()
+            - LSize(extraGeometry().left + extraGeometry().right, extraGeometry().top + extraGeometry().bottom));
+    }
+    else
+        configureBounds(0, 0);
+ 
+    configureSize(0,0);
+    configureState(pendingConfiguration().state | Activated);
+    //configureDecorationMode(ServerSide);
+    configureCapabilities(WindowMenuCap | FullscreenCap | MaximizeCap | MinimizeCap);
 }
 
 Toplevel::~Toplevel() {
@@ -35,11 +62,13 @@ Toplevel::~Toplevel() {
 		return;
 	}
 
+	/*
 	LSeat *seat = compositor->seat();
 	LSurface *surface = prev->surface();
 	surface->raise();
 	seat->keyboard()->setFocus(surface);
 	seat->pointer()->setFocus(surface);
+	*/
 
 	prev->next = next;
 	next->prev = prev;
