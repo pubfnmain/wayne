@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
+#include <wlr/backend/libinput.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_cursor.h>
@@ -22,14 +23,14 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
+#include <libinput.h>
 
 #include "input.h"
 #include "server.h"
 #include "xdg.h"
 #include "util.h"
 
-static void keyboard_handle_modifiers(
-		struct wl_listener *listener, void *data) {
+static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) {
 	/* This event is raised when a modifier key, such as shift or alt, is
 	 * pressed. We simply communicate this to the client. */
 	struct keyboard *keyboard =
@@ -51,9 +52,11 @@ static bool handle_super(struct server *server, xkb_keysym_t sym) {
 	case XKB_KEY_Escape:
 		wl_display_terminate(server->wl_display);
 		break;
+	case XKB_KEY_x:
+		spawn((char *[]){"wmenu-run", "-f", "JetBrains Mono 14", NULL});
+		break;
 	case XKB_KEY_Return:
-    char *args[] = {"alacritty", NULL};
-		spawn(args);
+		spawn((char *[]){"ghostty", NULL});
 		break;
 	default:
 		return false;
@@ -68,9 +71,16 @@ static bool handle_alt(struct server *server, xkb_keysym_t sym) {
 		if (wl_list_length(&server->toplevels) < 2) {
 			break;
 		}
-		struct toplevel *next_toplevel =
-			wl_container_of(server->toplevels.prev, next_toplevel, link);
+		struct toplevel *next_toplevel = wl_container_of(server->toplevels.prev, next_toplevel, link);
 		focus_toplevel(next_toplevel);
+		break;
+	case XKB_KEY_F4:
+		struct wlr_surface *surface = server->seat->keyboard_state.focused_surface;
+		if (surface == NULL)
+			break;
+		struct wlr_xdg_toplevel *toplevel = wlr_xdg_toplevel_try_from_wlr_surface(surface);
+		if (toplevel != NULL)
+				wlr_xdg_toplevel_send_close(toplevel);
 		break;
 	default:
 		return false;
@@ -171,6 +181,13 @@ void handle_new_pointer(struct server *server,
 	 * opportunity to do libinput configuration on the device to set
 	 * acceleration, etc. */
 	wlr_cursor_attach_input_device(server->cursor, device);
+
+	if (wlr_input_device_is_libinput(device)) {
+		struct libinput_device *libinput_dev = wlr_libinput_get_device_handle(device);
+
+		libinput_device_config_tap_set_enabled(libinput_dev, LIBINPUT_CONFIG_TAP_ENABLED);
+		libinput_device_config_tap_set_button_map(libinput_dev, LIBINPUT_CONFIG_TAP_MAP_LRM);
+	}
 }
 
 void handle_new_input(struct wl_listener *listener, void *data) {
@@ -373,8 +390,7 @@ void handle_cursor_motion_absolute(
 	 * move the mouse over the window. You could enter the window from any edge,
 	 * so we have to warp the mouse there. There is also some hardware which
 	 * emits these events. */
-	struct server *server =
-		wl_container_of(listener, server, cursor_motion_absolute);
+	struct server *server = wl_container_of(listener, server, cursor_motion_absolute);
 	struct wlr_pointer_motion_absolute_event *event = data;
 	wlr_cursor_warp_absolute(server->cursor, &event->pointer->base, event->x,
 		event->y);

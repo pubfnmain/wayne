@@ -10,7 +10,6 @@
     in {
       devShells.${system}.default = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [
-          clang
           clang-tools
           wayland-scanner
           bear
@@ -21,6 +20,7 @@
         ];
 
         buildInputs = with pkgs; [
+          libinput
           wlroots
           wayland
           wayland-protocols

@@ -4,9 +4,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <wlr/backend.h>
+#include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/render/allocator.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_subcompositor.h>
+#include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/util/log.h>
 #include <wayland-server-core.h>
@@ -40,10 +42,15 @@ int main(int argc, char *argv[]) {
 	/* The Wayland display is managed by libwayland. It handles accepting
 	 * clients from the Unix socket, manging Wayland globals, and so on. */
 	server.wl_display = wl_display_create();
+
+	// TODO: add support for screenshots
+	wlr_screencopy_manager_v1_create(server.wl_display);
+
 	/* The backend is a wlroots feature which abstracts the underlying input and
 	 * output hardware. The autocreate option will choose the most suitable
 	 * backend based on the current environment, such as opening an X11 window
 	 * if an X11 server is running. */
+
 	server.backend = wlr_backend_autocreate(wl_display_get_event_loop(server.wl_display), NULL);
 	if (server.backend == NULL) {
 		wlr_log(WLR_ERROR, "failed to create wlr_backend");
@@ -115,6 +122,8 @@ int main(int argc, char *argv[]) {
 	wl_signal_add(&server.xdg_shell->events.new_popup, &server.new_xdg_popup);
 
 	layer_shell_init(&server);
+
+	server.activation = wlr_xdg_activation_v1_create(server.wl_display);
 	/*
 	 * Creates a cursor, which is a wlroots utility for tracking the cursor
 	 * image shown on screen.
@@ -126,7 +135,7 @@ int main(int argc, char *argv[]) {
 	 * Xcursor themes to source cursor images from and makes sure that cursor
 	 * images are available at all scale factors on the screen (necessary for
 	 * HiDPI support). */
-	server.cursor_mgr = wlr_xcursor_manager_create(NULL, 24);
+	server.cursor_mgr = wlr_xcursor_manager_create("Adwaita", 28);
 
 	/*
 	 * wlr_cursor *only* displays an image on screen. It does not move around

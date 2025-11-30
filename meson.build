@@ -21,16 +21,18 @@ add_project_arguments(
 wayland_protocols = dependency('wayland-protocols')
 rt = cc.find_library('rt')
 
+subdir('protocols')
+
 deps = [
   rt,
   dependency('wlroots-0.19'),
   dependency('xkbcommon'),
   dependency('wayland-server'),
+  dependency('libinput'),
   wayland_protocols,
+  wl_protocols,
   dependency('pixman-1')
 ]
-
-subdir('protocols')
 
 executable(
   meson.project_name(),

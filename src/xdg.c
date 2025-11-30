@@ -3,10 +3,12 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 
 #include "server.h"
 #include "xdg.h"
 #include "input.h"
+#include "wlr-layer-shell-unstable-v1-protocol.h"
 
 struct toplevel *desktop_toplevel_at(
 		struct server *server, double lx, double ly,
@@ -36,6 +38,8 @@ struct toplevel *desktop_toplevel_at(
 	// TODO: review
 	if (tree != NULL)
 		return tree->node.data;
+
+	return NULL;
 }
 
 void focus_toplevel(struct toplevel *toplevel) {
@@ -52,6 +56,12 @@ void focus_toplevel(struct toplevel *toplevel) {
 		return;
 	}
 	if (prev_surface) {
+		struct wlr_layer_surface_v1 *layer = wlr_layer_surface_v1_try_from_wlr_surface(prev_surface);
+		printf("%b\n", layer == NULL);
+
+		if (layer && layer->current.layer == ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY) {
+			return;
+		}
 		/*
 		 * Deactivate the previously focused surface. This lets the client know
 		 * it no longer has focus and the client will repaint accordingly, e.g.
@@ -194,9 +204,11 @@ void xdg_toplevel_request_maximize(
 	 * wlr_xdg_surface_schedule_configure() is used to send an empty reply.
 	 * However, if the request was sent before an initial commit, we don't do
 	 * anything and let the client finish the initial surface setup. */
-	struct toplevel *toplevel =
-		wl_container_of(listener, toplevel, request_maximize);
+	struct toplevel *toplevel = wl_container_of(listener, toplevel, request_maximize);
+	struct wlr_xdg_toplevel_resize_event *event = data;
+
 	if (toplevel->xdg_toplevel->base->initialized) {
+		// wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 1920, 1080);
 		wlr_xdg_surface_schedule_configure(toplevel->xdg_toplevel->base);
 	}
 }

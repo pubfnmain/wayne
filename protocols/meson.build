@@ -21,3 +21,7 @@ foreach xml : protocols
 		command: [wayland_scanner, 'server-header', '@INPUT@', '@OUTPUT@'],
 	)
 endforeach
+
+wl_protocols = declare_dependency(
+	sources: wl_protocols_src
+)
